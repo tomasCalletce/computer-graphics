@@ -85,8 +85,6 @@ public class Draw
     for (int i = 1; i <= numberOfPoints; i++) {
       Point3 point = new Point3(instructions[i][0], instructions[i][1], 1);
 
-      System.out.println("Point: " + point.getX() + ' ' + point.getY());
-
       Point3 newPoint = Matrix3x3.mul(point, traformationMatrix);
 
       instructions[i] = new double[] { newPoint.getX(), newPoint.getY() };
@@ -124,7 +122,7 @@ public class Draw
     if (key == KeyEvent.VK_UP) {
       double[][] moveUp = {
           { 1, 0, 0 },
-          { 0, 1, -1 },
+          { 0, 1, -10 },
           { 0, 0, 1 }
       };
       Matrix3x3 moveUpMatrix = new Matrix3x3(moveUp);
@@ -133,32 +131,81 @@ public class Draw
     } else if (key == KeyEvent.VK_DOWN) {
       double[][] moveDown = {
           { 1, 0, 0 },
-          { 0, 1, 1 },
+          { 0, 1, 10 },
           { 0, 0, 1 }
       };
       Matrix3x3 moveDownMatrix = new Matrix3x3(moveDown);
       trasformPoints(moveDownMatrix);
       repaint();
-    } else if (key == KeyEvent.VK_LEFT) {
-      double[][] moveLeft = {
-          { 1, 0, -1 },
-          { 0, 1, 0 },
+    } else if (key == KeyEvent.VK_0) {
+      Point3 center = calculateCenter();
+      double angle = Math.toRadians(-5);
+
+      double[][] moveToCenter = {
+          { 1, 0, -center.getX() },
+          { 0, 1, -center.getY() },
           { 0, 0, 1 }
       };
-      Matrix3x3 moveLeftMatrix = new Matrix3x3(moveLeft);
-      trasformPoints(moveLeftMatrix);
-      repaint();
-    } else if (key == KeyEvent.VK_RIGHT) {
-      double angle = Math.toRadians(-5);
-      double[][] rotateLeft = {
+      Matrix3x3 moveToCenterMatrix = new Matrix3x3(moveToCenter);
+      trasformPoints(moveToCenterMatrix);
+
+      double[][] rotate = {
           { Math.cos(angle), -Math.sin(angle), 0 },
           { Math.sin(angle), Math.cos(angle), 0 },
           { 0, 0, 1 }
       };
-      Matrix3x3 rotateLeftMatrix = new Matrix3x3(rotateLeft);
-      trasformPoints(rotateLeftMatrix);
+      Matrix3x3 rotateMatrix = new Matrix3x3(rotate);
+      trasformPoints(rotateMatrix);
+
+      double[][] moveBack = {
+          { 1, 0, center.getX() },
+          { 0, 1, center.getY() },
+          { 0, 0, 1 }
+      };
+      Matrix3x3 moveBackMatrix = new Matrix3x3(moveBack);
+      trasformPoints(moveBackMatrix);
+
+      repaint();
+    } else if (key == KeyEvent.VK_RIGHT) {
+      Point3 center = calculateCenter();
+      double angle = Math.toRadians(5);
+
+      double[][] moveToCenter = {
+          { 1, 0, -center.getX() },
+          { 0, 1, -center.getY() },
+          { 0, 0, 1 }
+      };
+      Matrix3x3 moveToCenterMatrix = new Matrix3x3(moveToCenter);
+      trasformPoints(moveToCenterMatrix);
+
+      double[][] rotate = {
+          { Math.cos(angle), -Math.sin(angle), 0 },
+          { Math.sin(angle), Math.cos(angle), 0 },
+          { 0, 0, 1 }
+      };
+      Matrix3x3 rotateMatrix = new Matrix3x3(rotate);
+      trasformPoints(rotateMatrix);
+
+      double[][] moveBack = {
+          { 1, 0, center.getX() },
+          { 0, 1, center.getY() },
+          { 0, 0, 1 }
+      };
+      Matrix3x3 moveBackMatrix = new Matrix3x3(moveBack);
+      trasformPoints(moveBackMatrix);
+
       repaint();
     }
+  }
+
+  private Point3 calculateCenter() {
+    double sumX = 0, sumY = 0;
+    int numberOfPoints = (int) instructions[0][0];
+    for (int i = 1; i <= numberOfPoints; i++) {
+      sumX += instructions[i][0];
+      sumY += instructions[i][1];
+    }
+    return new Point3(sumX / numberOfPoints, sumY / numberOfPoints, 1);
   }
 
   @Override
