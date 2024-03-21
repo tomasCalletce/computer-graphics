@@ -8,7 +8,8 @@ public class Matrix4x4 {
     if (matrix.length != 4 ||
         matrix[0].length != 4 ||
         matrix[1].length != 4 ||
-        matrix[2].length != 4) {
+        matrix[2].length != 4 ||
+        matrix[3].length != 4) {
       throw new IllegalArgumentException("Matrix must be 4x4.");
     }
 
@@ -32,7 +33,6 @@ public class Matrix4x4 {
   }
 
   // STATIC METHODS
-
   public static Point4 mul(Point4 point, Matrix4x4 matrix) {
     double[][] m = matrix.getMatrix();
 

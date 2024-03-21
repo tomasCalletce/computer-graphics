@@ -30,4 +30,24 @@ public class Point4 {
     return w;
   }
 
+  @Override
+  public String toString() {
+    return "Point4{" +
+        "x=" + x +
+        ", y=" + y +
+        ", z=" + z +
+        ", w=" + w +
+        '}';
+  }
+
+  public void normalizeW() {
+    if (w == 0) {
+      return;
+    }
+    this.x /= w;
+    this.y /= w;
+    this.z /= w;
+    this.w = 1;
+  }
+
 }
