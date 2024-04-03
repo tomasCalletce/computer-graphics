@@ -6,27 +6,24 @@ package src.hw;
  * and open the template in the editor.
  */
 import java.awt.Graphics;
-import java.awt.Point;
 
 import javax.swing.JPanel;
 import javax.swing.JFrame;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import src.primitives.Point4;
-import src.primitives.Matrix3x3;
 import src.primitives.Matrix4x4;
+import src.primitives.Vector4;
 
 /**
  *
  * @author thetom
  */
-public class Draw3D
-    extends JPanel implements KeyListener {
+public class MoveCamara extends JPanel implements KeyListener {
 
   static final int WIDTH = 800;
   static final int HEIGHT = 600;
@@ -43,25 +40,38 @@ public class Draw3D
   ArrayList<Point4> vertices;
   public ArrayList<Edge> edges;
 
-  public Draw3D() {
-    super();
+  Vector4 n;
+  Vector4 u;
+  Vector4 v;
 
-    double[][] initialm = {
-        { 1, 0, 0, 0 },
-        { 0, 1, 0, 0 },
-        { 0, 0, 1, 0 },
-        { 0, 0, 0, 0 }
-    };
-    this.transformnMatrix = new Matrix4x4(initialm);
+  public MoveCamara() {
+    super();
 
     vertices = new ArrayList<Point4>();
     edges = new ArrayList<Edge>();
 
     readObject("casita3D.txt");
 
-    System.out.println("x center:" + centerX);
-    System.out.println("y center:" + centerY);
-    System.out.println("z center:" + centerZ);
+    double[][] initialm = {
+        { 1, 0, 0, centerX },
+        { 0, 1, 0, centerY },
+        { 0, 0, 1, centerZ },
+        { 0, 0, 0, 1 }
+
+    };
+    this.transformnMatrix = new Matrix4x4(initialm);
+
+    Vector4 from = new Vector4(0,0,centerZ,1);
+    Vector4 lookAt = new Vector4(0,0,-centerZ,1);
+    Vector4 up = new Vector4(0,1,0,1);
+
+    this.n = Vector4.sub(from, lookAt);
+    this.n = Vector4.normilize(this.n);
+
+    this.u = Vector4.cross(up, this.n);
+    this.u = Vector4.normilize(this.u);
+
+    this.v = Vector4.cross(this.n, this.u);
 
     // Make the JPanel focusable
     setFocusable(true);
@@ -69,20 +79,6 @@ public class Draw3D
     requestFocusInWindow();
     // Add this class as the KeyListener
     addKeyListener(this);
-
-    printVerticesAndEndges();
-  }
-
-  public void printVerticesAndEndges() {
-    System.out.println("Vertices:");
-    for (Point4 p : vertices) {
-      System.out.println(p);
-    }
-
-    System.out.println("Edges:");
-    for (Edge e : edges) {
-      System.out.println(e);
-    }
   }
 
   public void readObject(String filename) {
@@ -152,6 +148,32 @@ public class Draw3D
     }
   }
 
+  public void alignReference() {
+    Matrix4x4 camaraReference = setCamaraReference(new Vector4(0,0,centerZ,1));
+
+    ArrayList<Point4> trasformedVertices = new ArrayList<>();
+
+
+    for (Point4 v : this.vertices) {
+      Point4 newVertex = Matrix4x4.mul(v, camaraReference);
+      newVertex.normalizeW();
+      trasformedVertices.add(newVertex);
+    }
+
+    this.vertices = trasformedVertices;
+  }
+
+  public Matrix4x4 setCamaraReference(Vector4 from) {
+    double[][] m = {
+        { this.u.getX(), this.u.getY(), this.u.getW(), Vector4.dot(Vector4.negative(this.u), from) },
+        { this.v.getX(), this.v.getY(), this.v.getW(), Vector4.dot(Vector4.negative(this.v), from) },
+        { this.n.getX(), this.n.getY(), this.n.getW(), Vector4.dot(Vector4.negative(this.n), from) },
+        { 0, 0, 0, 1 }
+    };
+
+    return new Matrix4x4(m);
+  }
+
   public void transformObject() {
     ArrayList<Point4> transforedVertices = new ArrayList<>();
 
@@ -175,12 +197,12 @@ public class Draw3D
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
 
+    System.out.println(this.transformnMatrix);
+
     this.g = g;
-
     transformObject();
-
+    alignReference();
     projectObject();
-
     draw();
   }
 
@@ -192,55 +214,16 @@ public class Draw3D
   public void keyPressed(KeyEvent e) {
     int key = e.getKeyCode();
     if (key == KeyEvent.VK_UP) {
-      double[][] moveUp = {
-          { 1, 0, 0, 0 },
-          { 0, 1, 0, 10 },
-          { 0, 0, 1, 0 },
-          { 0, 0, 0, 1 }
-      };
-      this.transformnMatrix = new Matrix4x4(moveUp);
-      repaint();
-    } else if (key == KeyEvent.VK_DOWN) {
-      double[][] moveUp = {
-          { 1, 0, 0, 0 },
-          { 0, 1, 0, -10 },
-          { 0, 0, 1, 0 },
-          { 0, 0, 0, 1 }
-      };
-      this.transformnMatrix = new Matrix4x4(moveUp);
-      repaint();
+        double[][] moveUp = {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 10 },
+            { 0, 0, 1, 0 },
+            { 0, 0, 0, 1 }
+        };
+        this.transformnMatrix = new Matrix4x4(moveUp);
+        repaint();
     } else if (key == KeyEvent.VK_0) {
-
     } else if (key == KeyEvent.VK_RIGHT) {
-      double angle = Math.toRadians(5);
-
-      double[][] translateToOrigin = {
-          { 1, 0, 0, -centerX },
-          { 0, 1, 0, -centerY },
-          { 0, 0, 1, -centerZ },
-          { 0, 0, 0, 1 }
-      };
-      this.transformnMatrix = new Matrix4x4(translateToOrigin);
-      transformObject();
-
-      double[][] rotate = {
-          { 1, 0, 0, 0 },
-          { 0, Math.cos(angle), -Math.sin(angle), 0 },
-          { 0, Math.sin(angle), Math.cos(angle), 0 },
-          { 0, 0, 0, 1 }
-      };
-      this.transformnMatrix = new Matrix4x4(rotate);
-      transformObject();
-
-      double[][] translateBack = {
-          { 1, 0, 0, centerX },
-          { 0, 1, 0, centerY },
-          { 0, 0, 1, centerZ },
-          { 0, 0, 0, 1 }
-      };
-      this.transformnMatrix = new Matrix4x4(translateBack);
-
-      repaint();
     }
   }
 
@@ -254,7 +237,7 @@ public class Draw3D
     // Al cerrar el frame, termina la ejecución de este programa
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     // Agregar un JPanel que se llama Points (esta clase)
-    Draw3D ev = new Draw3D();
+    MoveCamara ev = new MoveCamara();
     frame.add(ev);
     // Asignarle tamaño
     frame.setSize(ev.WIDTH, ev.HEIGHT);
